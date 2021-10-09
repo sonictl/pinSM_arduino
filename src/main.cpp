@@ -16,6 +16,7 @@
 #define IR_PIN 13
 
 static uint32_t time_record = 0;
+static uint32_t time_record2 = 0;      // second timer for WORKING2RESTING status
 const uint32_t REST_TIME = 60*1000;    // parameters for RESTING state (msec)
 bool rest_enough = false;
 const uint32_t WORKING_TIME = 40*60*1000;   //params for WORKING state (msec)
@@ -100,16 +101,17 @@ void loop(){
       break;
     
     case WORKING:
-      Serial.println("Working...");
+      int workingRestT;
+      workingRestT = millis() - time_record - WORKING_TIME;
+      Serial.println("Working..." + String(workingRestT));
       delay(500);
       if (millis()-time_record >= WORKING_TIME){
         status = ALARMING;
         time_record = millis();
       }
-      // if (millis()-time_record < WORKING_TIME && digitalRead(IR_PIN)==LOW){
       if (millis()-time_record < WORKING_TIME && digitalRead(IR_PIN)==HIGH){
         status = WORKING2RESTING;
-        time_record = millis();
+        time_record2 = millis();
       }
       break;
     
@@ -140,12 +142,13 @@ void loop(){
     case WORKING2RESTING:
       Serial.println("WORKING2RESTING...");
       delay(500);
-      if ((millis() - time_record >= 20000) && digitalRead(IR_PIN)==HIGH){
+      
+      if ((millis() - time_record2 >= 20000) && digitalRead(IR_PIN)==HIGH){
         time_record = millis();
         status = RESTING;
       }
-      if ((millis() - time_record < 20000) && digitalRead(IR_PIN)==LOW){
-        time_record = millis();
+      if ((millis() - time_record2 < 20000) && digitalRead(IR_PIN)==LOW){    //condition for jump back
+        // time_record = millis();
         status = WORKING;
       }
       break;
